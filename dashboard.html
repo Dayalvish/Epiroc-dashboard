@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPIROC PARAMETER DASHBOARD</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --epiroc-yellow: #f1c40f;
+            --bg-dark: #0f0f0f;
+            --card-bg: #1e1e1e;
+            --text: #ecf0f1;
+            --dim: #95a5a6;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --info: #3498db;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-dark); color: var(--text); padding: 20px; margin: 0; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        /* BRANDING HEADER */
+        .branding { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid var(--epiroc-yellow); padding-bottom: 10px; }
+        .logo-box { display: flex; align-items: center; gap: 15px; }
+        .logo-box img { height: 50px; } /* Replace with actual logo path */
+        .logo-box h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; }
+
+        .controls { background: var(--card-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        select, input[type="date"] { padding: 10px; border-radius: 4px; background: #000; color: #fff; border: 1px solid #444; cursor: pointer; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid #333; transition: 0.3s; }
+        .card:hover { border-color: var(--epiroc-yellow); }
+        .title { color: var(--epiroc-yellow); font-size: 0.75rem; text-transform: uppercase; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 15px; }
+        
+        .val { font-size: 2.2rem; font-weight: bold; display: block; margin-top: 5px; }
+        .unit { font-size: 0.8rem; color: var(--dim); text-transform: uppercase; }
+        
+        .alert { padding: 12px; border-radius: 6px; text-align: center; margin-top: 15px; font-weight: bold; }
+        .blue { background: rgba(52, 152, 219, 0.15); color: var(--info); border: 1px solid var(--info); }
+        .green { background: rgba(39, 174, 96, 0.15); color: var(--success); border: 1px solid var(--success); }
+        
+        .stat-row { display: flex; justify-content: space-between; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .stat-item { text-align: center; flex: 1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="branding">
+        <div class="logo-box">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Epiroc_logo.svg" alt="Epiroc Logo">
+            <h1>EPIROC PARAMETER DASHBOARD</h1>
+        </div>
+        <div id="f-sync" style="color: var(--epiroc-yellow); font-weight: bold;">--/--/----</div>
+    </div>
+
+    <div class="controls">
+        <select id="fleetSelect" onchange="fetchData()">
+            <option value="">-- Select Fleet ID --</option>
+        </select>
+        <input type="date" id="dateFilter" onchange="fetchData()">
+        <span id="loader" style="display:none;">⏳ FETCHING DATA...</span>
+    </div>
+
+    <div class="stat-row">
+        <div class="stat-item"><span class="unit">MONTH HIGH (DISCHARGE T)</span><span id="s-high" class="val" style="color:var(--danger)">--</span></div>
+        <div class="stat-item"><span class="unit">MONTH AVERAGE</span><span id="s-avg" class="val" style="color:var(--epiroc-yellow)">--</span></div>
+        <div class="stat-item"><span class="unit">MONTH LOW</span><span id="s-low" class="val" style="color:var(--info)">--</span></div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <div class="title">Fleet Identity</div>
+            <div style="display: flex; justify-content: space-between;">
+                <div><span class="unit">Rig ID</span><span id="f-id" style="font-size: 1.5rem; font-weight: bold; color:var(--epiroc-yellow)">--</span></div>
+                <div style="text-align: right;"><span class="unit">Shift</span><span id="f-shift" style="font-size: 1.5rem; font-weight: bold;">--</span></div>
+            </div>
+            <div style="margin-top:10px;"><span class="unit">Year: </span><span id="f-year">--</span></div>
+        </div>
+
+        <div class="card">
+            <div class="title">Engine Performance</div>
+            <div style="display:flex; justify-content:space-between">
+                <div><span class="unit">Coolant Temp</span><span id="e-temp" class="val">--</span></div>
+                <div><span class="unit">Oil Pressure</span><span id="e-oil" class="val">--</span></div>
+            </div>
+            <div style="margin-top:10px;"><span class="unit">Engine Load: </span><span id="e-load">--</span>%</div>
+        </div>
+
+        <div class="card">
+            <div class="title">Compressor System</div>
+            <div style="display:flex; justify-content:space-between">
+                <div><span class="unit">Discharge T</span><span id="c-temp" class="val">--</span></div>
+                <div><span class="unit">Receiver P</span><span id="c-press" class="val">--</span></div>
+            </div>
+            <div id="c-alert" class="alert">Select a Rig to Scan</div>
+        </div>
+
+        <div class="card">
+            <div class="title">Hydraulic System</div>
+            <div style="display:flex; justify-content:space-between">
+                <div><span class="unit">Oil Temp</span><span id="h-temp" class="val">--</span></div>
+                <div><span class="unit">Rotation P</span><span id="h-rot" class="val">--</span></div>
+            </div>
+            <div style="margin-top:10px;"><span class="unit">Feed Pressure: </span><span id="h-feed">--</span> bar</div>
+        </div>
+
+        <div class="card">
+            <div class="title">Auxiliary Parameters</div>
+            <div style="display:flex; justify-content:space-between">
+                <div><span class="unit">Battery Volt</span><span id="o-volt" class="val">--</span></div>
+                <div><span class="unit">Fuel Pressure</span><span id="o-fuel" class="val">--</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // REPLACE WITH YOUR RE-DEPLOYED URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbwUzsXNNN1F0z0B4hQaUZwvwQu0E4wk0RIt6mvsUcB61iXWZMW1VOODgq4ktpfo7l-p/exec";
+
+    window.onload = async () => {
+        try {
+            const res = await fetch(`${API_URL}?get=list`);
+            const list = await res.json();
+            const sel = document.getElementById('fleetSelect');
+            list.forEach(id => {
+                let opt = document.createElement('option');
+                opt.value = opt.text = id;
+                sel.add(opt);
+            });
+        } catch (e) { console.error("Could not load rig list."); }
+    };
+
+    async function fetchData() {
+        const id = document.getElementById('fleetSelect').value;
+        const date = document.getElementById('dateFilter').value;
+        if (!id) return;
+
+        document.getElementById('loader').style.display = 'inline';
+        let url = `${API_URL}?fleetId=${id}`;
+        if (date) url += `&date=${date}`;
+
+        try {
+            const res = await fetch(url);
+            const d = await res.json();
+            
+            // Header & Stats
+            document.getElementById('f-id').innerText = d.fleet.id;
+            document.getElementById('f-year').innerText = d.fleet.year;
+            document.getElementById('f-shift').innerText = d.fleet.shift;
+            document.getElementById('f-sync').innerText = new Date(d.fleet.time).toLocaleDateString();
+            document.getElementById('s-high').innerText = d.analytics.high + "°";
+            document.getElementById('s-avg').innerText = d.analytics.avg + "°";
+            document.getElementById('s-low').innerText = d.analytics.low + "°";
+
+            // Values
+            document.getElementById('e-temp').innerText = d.eng.temp + "°";
+            document.getElementById('e-oil').innerText = d.eng.oil + "b";
+            document.getElementById('e-load').innerText = d.eng.load;
+            document.getElementById('c-temp').innerText = d.comp.temp + "°";
+            document.getElementById('c-press').innerText = d.comp.press + "b";
+            document.getElementById('h-temp').innerText = d.hyd.temp + "°";
+            document.getElementById('h-rot').innerText = d.hyd.rot + "b";
+            document.getElementById('h-feed').innerText = d.hyd.feed;
+            document.getElementById('o-volt').innerText = d.others.volt + "V";
+            document.getElementById('o-fuel').innerText = d.others.fuel + "b";
+
+            // Alert Logic
+            const cAlert = document.getElementById('c-alert');
+            if (d.comp.temp < d.comp.lowLim) {
+                cAlert.innerText = "⚠️ CONDENSATION RISK (LOW TEMP)";
+                cAlert.className = "alert blue";
+            } else {
+                cAlert.innerText = "✅ TEMPERATURE OPTIMAL";
+                cAlert.className = "alert green";
+            }
+        } catch (e) { alert("Data Fetch Error: " + e); }
+        document.getElementById('loader').style.display = 'none';
+    }
+</script>
+</body>
+</html>
