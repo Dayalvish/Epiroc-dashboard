@@ -2,160 +2,218 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPIROC REGIONAL TECHNICAL DASHBOARD</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --ey: #f1c40f; --bg: #0d0d0d; --card: #1a1a1a; --red: #ff4d4d; --green: #2ecc71; --blue: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 20px; opacity:0; transition: 0.5s; }
+        :root { 
+            --ey: #f1c40f; 
+            --bg: #0d0d0d; 
+            --card: #1a1a1a; 
+            --red: #ff4d4d; 
+            --green: #2ecc71; 
+            --blue: #3498db; 
+            --dim: #95a5a6;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg); 
+            color: #fff; 
+            margin: 0; 
+            padding: 20px; 
+            opacity: 0; 
+            transition: 0.5s; 
+        }
         .authorized { opacity: 1 !important; }
-        .branding { display: flex; justify-content: space-between; border-bottom: 2px solid var(--ey); padding-bottom: 10px; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; }
-        .title { color: var(--ey); font-size: 0.8rem; font-weight: bold; border-bottom: 1px solid #333; margin-bottom: 15px; text-transform: uppercase; }
-        .val { font-size: 2.2rem; font-weight: bold; display: block; }
-        .unit { font-size: 0.8rem; color: #888; text-transform: uppercase; }
-        .controls { background: var(--card); padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
-        select, input { padding: 10px; background: #000; color: #fff; border: 1px solid #444; border-radius: 4px; }
         
-        /* Alert Styling */
+        /* HEADER & BRANDING */
+        .branding { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid var(--ey); 
+            padding-bottom: 15px; 
+            margin-bottom: 25px; 
+        }
+        .logo-box h1 { margin: 0; font-size: 1.6rem; letter-spacing: 1px; color: var(--ey); }
+        .user-tag { color: var(--dim); font-size: 0.85rem; margin-top: 5px; }
+
+        /* CONTROLS AREA */
+        .controls { 
+            background: var(--card); 
+            padding: 15px 20px; 
+            border-radius: 8px; 
+            margin-bottom: 25px; 
+            display: flex; 
+            gap: 20px; 
+            align-items: center; 
+            border: 1px solid #333;
+        }
+        select, input { 
+            padding: 12px; 
+            background: #000; 
+            color: #fff; 
+            border: 1px solid #444; 
+            border-radius: 5px; 
+            cursor: pointer;
+            min-width: 180px;
+        }
+
+        /* DIAGNOSTIC GRID */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 20px; 
+        }
+        .card { 
+            background: var(--card); 
+            padding: 20px; 
+            border-radius: 12px; 
+            border-left: 4px solid var(--ey); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-3px); }
+        
+        .title { 
+            color: var(--ey); 
+            font-size: 0.8rem; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            margin-bottom: 15px; 
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+        .val { font-size: 2.2rem; font-weight: bold; display: block; margin: 5px 0; }
+        .unit { font-size: 0.8rem; color: var(--dim); text-transform: uppercase; }
+
+        /* ALERT ANIMATION */
         .alert-text { color: var(--red) !important; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.3; } }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        #loader { color: var(--ey); font-weight: bold; margin-left: 10px; }
     </style>
 </head>
 <body>
 
-<div class="branding">
-    <div>
-        <h1 id="header-title" style="margin:0;">EPIROC REGIONAL VIEW</h1>
-        <small id="user-info" style="color: var(--blue);">Verifying Regional Credentials...</small>
-    </div>
-    <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" height="50">
-</div>
-
-<div class="controls">
-    <select id="fleetSelect" onchange="fetchData()"><option value="">-- Select Rig --</option></select>
-    <input type="month" id="monthFilter" onchange="fetchData()">
-    <span id="sync-status" style="font-size: 0.8rem; color: var(--green); display:none;">● SYNCING</span>
-</div>
-
-<div class="grid">
-    <div class="card">
-        <div class="title">Asset Identity</div>
-        <span class="unit">Rig ID</span><span id="f-id" class="val">--</span>
-        <span class="unit">Operational Shift</span><span id="f-shift" style="font-size: 1.2rem; display: block;">--</span>
-    </div>
-
-    <div class="card">
-        <div class="title">Engine Performance</div>
-        <div style="display:flex; justify-content:space-between;">
-            <div><span class="unit">Coolant Temp</span><span id="e-temp" class="val">--</span></div>
-            <div><span class="unit">Oil Press</span><span id="e-oil" class="val">--</span></div>
+<div class="container">
+    <div class="branding">
+        <div class="logo-box">
+            <h1 id="header-title">EPIROC FLEET MONITOR</h1>
+            <div id="user-info" class="user-tag">Initializing Regional Session...</div>
         </div>
-    </div>
-    
-    <div class="card" style="grid-column: span 2;">
-        <div class="title">Regional Technical Diagnostics (Critical)</div>
-        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center;">
-            <div><span class="unit">Fuel Press (N)</span><span id="o-fuel" class="val">--</span><small>bar</small></div>
-            <div><span class="unit">Receiver NL (O)</span><span id="c-press-nl" class="val">--</span><small>bar</small></div>
-            <div><span class="unit">Hyd Oil T (AI)</span><span id="h-temp-ext" class="val">--</span><small>°C</small></div>
-            <div><span class="unit">Charging (AO)</span><span id="o-volt-ext" class="val">--</span><small>V</small></div>
-        </div>
+        <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" height="55" alt="Epiroc Logo">
     </div>
 
-    <div class="card">
-        <div class="title">Hydraulic & DTH</div>
-        <div style="display:flex; justify-content:space-between;">
-            <div><span class="unit">Rotation P</span><span id="h-rot" class="val">--</span></div>
-            <div><span class="unit">Feed Press</span><span id="h-feed" class="val">--</span></div>
+    <div class="controls">
+        <div>
+            <label class="unit">Select Rig ID</label><br>
+            <select id="fleetSelect" onchange="fetchData()"><option value="">-- Select Rig --</option></select>
         </div>
+        <div>
+            <label class="unit">Target Month</label><br>
+            <input type="month" id="monthFilter" onchange="fetchData()">
+        </div>
+        <span id="loader" style="display:none;">⏳ DATA SYNC IN PROGRESS...</span>
     </div>
 
-    <div class="card">
-        <div class="title">Compressor Discharge</div>
-        <div style="display:flex; justify-content:space-between;">
-            <div><span class="unit">Discharge T</span><span id="c-temp" class="val">--</span></div>
-            <div><span class="unit">Receiver P</span><span id="c-press" class="val">--</span></div>
-        </div>
+    <div class="grid">
+        <div class="card"><div class="title">Engine Rotation</div><span id="e-rpm" class="val">--</span><span class="unit">RPM</span></div>
+        <div class="card"><div class="title">Engine Oil</div><span id="e-oil" class="val">--</span><span class="unit">BAR (L)</span></div>
+        <div class="card"><div class="title">Coolant Temp</div><span id="e-temp" class="val">--</span><span class="unit">°C (I)</span></div>
+        
+        <div class="card"><div class="title">Fuel Pressure</div><span id="o-fuel" class="val">--</span><span class="unit">BAR (N)</span></div>
+        <div class="card"><div class="title">Receiver NL</div><span id="c-press-nl" class="val">--</span><span class="unit">BAR (O)</span></div>
+        
+        <div class="card"><div class="title">Hydraulic Temp</div><span id="h-temp" class="val">--</span><span id="h-unit" class="unit">°C (AI)</span></div>
+        <div class="card"><div class="title">Charging Volts</div><span id="o-volt" class="val">--</span><span id="v-unit" class="unit">VOLTS (AO)</span></div>
+        
+        <div class="card"><div class="title">Engine Load</div><span id="e-load" class="val">--</span><span class="unit">% PERCENT (J)</span></div>
     </div>
 </div>
 
 
 
 <script>
-    const API = "https://script.google.com/macros/s/AKfycbyjKgTaHOWvIYo_n2CLuafKItTx8NrwQzPZiNGxfx7uyfuyGAEn3QvppX2RySb0AjGg/exec";
+    const API = "https://script.google.com/macros/s/AKfycbwN7u1eAMGSnUI4E6jVJQQh1gyHGRow3GkTn324KOryNvC_EFh6PXLXShWpPH7Hi0PV/exec";
     let userRegion = "All";
 
     window.onload = async () => {
-        const u = prompt("Regional User ID:"), p = prompt("Password:");
-        if(!u || !p) { location.reload(); return; }
+        const u = prompt("Enter User ID (Regional):");
+        const p = prompt("Enter Password:");
         
         const res = await fetch(`${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
         const data = await res.json();
         
         if(data.success) { 
             userRegion = data.region;
-            document.getElementById('header-title').innerText = `EPIROC - ${userRegion} VIEW`;
-            document.getElementById('user-info').innerText = `Active Region: ${userRegion} | User: ${data.name}`;
+            document.getElementById('header-title').innerText = `EPIROC - ${userRegion.toUpperCase()} VIEW`;
+            document.getElementById('user-info').innerText = `Logged in: ${data.name} | Access Level: ${userRegion}`;
             document.body.classList.add('authorized');
             init(); 
         } else { 
-            alert("Login Failed. Access Denied."); 
+            alert("Login Failed: Unauthorized Access."); 
             location.reload(); 
         }
     };
 
     async function init() {
-        const res = await fetch(`${API}?get=list&userRegion=${userRegion}`);
-        const rigs = await res.json();
-        const sel = document.getElementById('fleetSelect');
-        sel.innerHTML = rigs.map(id => `<option value="${id}">${id}</option>`).join('');
-        if(rigs.length > 0) fetchData();
+        try {
+            const res = await fetch(`${API}?get=list&userRegion=${userRegion}`);
+            const rigs = await res.json();
+            const sel = document.getElementById('fleetSelect');
+            sel.innerHTML = rigs.map(id => `<option value="${id}">${id}</option>`).join('');
+            if(rigs.length > 0) fetchData();
+        } catch (e) { console.error("Rig list failed to load."); }
     }
 
     async function fetchData() {
-        const id = document.getElementById('fleetSelect').value, month = document.getElementById('monthFilter').value;
+        const id = document.getElementById('fleetSelect').value;
+        const month = document.getElementById('monthFilter').value;
         if (!id) return;
         
-        document.getElementById('sync-status').style.display = 'inline';
+        document.getElementById('loader').style.display = 'inline';
         
         try {
             const res = await fetch(`${API}?fleetId=${encodeURIComponent(id)}&month=${month}&userRegion=${userRegion}`);
             const d = await res.json();
             const latest = d.latest;
 
-            if(!latest || latest.length === 0) {
-                alert("No data available for this rig/month.");
-                return;
+            // MAPPING DATA TO GRID
+            document.getElementById('e-rpm').innerText = latest[7] || "0";
+            document.getElementById('e-temp').innerText = latest[8] || "0";
+            document.getElementById('e-oil').innerText = latest[11] || "0";
+            document.getElementById('e-load').innerText = latest[9] || "0";
+            document.getElementById('o-fuel').innerText = latest[13] || "0";
+            document.getElementById('c-press-nl').innerText = latest[14] || "0";
+            
+            // HYDRAULIC TEMPERATURE ALERT (COL AI / INDEX 34)
+            const hydVal = parseFloat(latest[34]);
+            const hydEl = document.getElementById('h-temp');
+            hydEl.innerText = hydVal || "0";
+            if (hydVal > 85) {
+                hydEl.className = "val alert-text";
+                document.getElementById('h-unit').innerText = "⚠️ OVERHEAT (AI)";
+            } else {
+                hydEl.className = "val";
+                document.getElementById('h-unit').innerText = "°C (AI)";
             }
 
-            // Standard Mapping
-            document.getElementById('f-id').innerText = latest[3];
-            document.getElementById('f-shift').innerText = "Shift: " + latest[4];
-            document.getElementById('e-temp').innerText = latest[8];
-            document.getElementById('e-oil').innerText = latest[11];
-            document.getElementById('h-rot').innerText = latest[28];
-            document.getElementById('h-feed').innerText = latest[29];
-            document.getElementById('c-temp').innerText = latest[17];
-            document.getElementById('c-press').innerText = latest[19];
-
-            // NEW TECHNICAL EXPANSION MAPPING
-            document.getElementById('o-fuel').innerText = latest[13];
-            document.getElementById('c-press-nl').innerText = latest[14];
-            
-            // 1. Hydraulic Temperature Alert Logic (Col AI / Index 34)
-            const hydTemp = parseFloat(latest[34]);
-            const hydEl = document.getElementById('h-temp-ext');
-            hydEl.innerText = hydTemp;
-            hydEl.className = (hydTemp > 85) ? "val alert-text" : "val";
-
-            // 2. Charging Voltage Alert Logic (Col AO / Index 40)
-            const volt = parseFloat(latest[40]);
-            const voltEl = document.getElementById('o-volt-ext');
-            voltEl.innerText = volt;
-            voltEl.className = (volt < 24 || volt > 29) ? "val alert-text" : "val";
+            // CHARGING VOLTAGE ALERT (COL AO / INDEX 40)
+            const voltVal = parseFloat(latest[40]);
+            const voltEl = document.getElementById('o-volt');
+            voltEl.innerText = voltVal || "0";
+            if (voltVal < 24 || voltVal > 29) {
+                voltEl.className = "val alert-text";
+                document.getElementById('v-unit').innerText = "⚠️ VOLTAGE ERR (AO)";
+            } else {
+                voltEl.className = "val";
+                document.getElementById('v-unit').innerText = "VOLTS (AO)";
+            }
 
         } catch (e) { console.error("Data Sync Error:", e); }
-        document.getElementById('sync-status').style.display = 'none';
+        document.getElementById('loader').style.display = 'none';
     }
 </script>
 </body>
