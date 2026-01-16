@@ -7,16 +7,19 @@
     <style>
         :root { --ey: #f1c40f; --bg: #0d0d0d; --card: #1a1a1a; --red: #ff4d4d; --dim: #95a5a6; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: #fff; margin: 0; padding: 25px; overflow-x: hidden; }
+        
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .login-grid { background: var(--card); padding: 50px; border-radius: 12px; border: 2px solid var(--ey); width: 420px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.9); }
         .login-grid img { height: 60px; margin-bottom: 30px; }
         .input-field { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
         .rem-row { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; color: var(--dim); font-size: 0.9rem; }
         .auth-btn { width: 100%; padding: 16px; background: var(--ey); color: #000; border: none; font-weight: 900; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
+
         #main-dashboard { display: none; }
         .header { display: flex; justify-content: space-between; border-bottom: 3px solid var(--ey); padding-bottom: 20px; margin-bottom: 35px; }
         .controls { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 35px; display: flex; gap: 25px; align-items: center; border: 1px solid #333; }
         .controls select, .controls input { padding: 12px; background: #000; color: #fff; border: 1px solid #444; border-radius: 8px; min-width: 220px; }
+        
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         .card { background: var(--card); padding: 25px; border-radius: 15px; border-left: 5px solid var(--ey); }
         .title { color: var(--ey); font-size: 0.8rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
@@ -54,7 +57,7 @@
     <div class="controls">
         <select id="rigSel" onchange="refreshData()"><option value="">-- Select Rig --</option></select>
         <input type="month" id="monthSel" onchange="refreshData()">
-        <span id="load-tag" style="color:var(--ey); display:none; font-weight:bold;">⏳ SYNCING DATABASE...</span>
+        <span id="load-tag" style="color:var(--ey); display:none; font-weight:bold;">⏳ SYNCING...</span>
     </div>
 
     <div class="grid">
@@ -70,8 +73,8 @@
 </div>
 
 <script>
-    // 1. MUST UPDATE THIS URL EVERY TIME YOU RE-DEPLOY GOOGLE SCRIPT
-    const API = "https://script.google.com/macros/s/AKfycbwZHgMVIOozYT6CiVUuNqJyeit0Qprdq4AJTLG5T3ghB_P_ALfhMDzdqAhgrw84wyQ/execL";
+    // PASTE YOUR NEW WEB APP URL HERE
+    const API = "https://script.google.com/macros/s/AKfycbzOR7ptoqxv2dML1agens0lyqhsf8JxNlXf0Yul2ZWS9BYSVI3p5HMqVreHtnhGa2K9/exec";
     let userReg = "All";
 
     window.onload = () => {
@@ -80,43 +83,41 @@
     };
 
     async function executeLogin() {
-    const u = document.getElementById('userid').value.trim();
-    const p = document.getElementById('userpass').value.trim();
-    const rem = document.getElementById('remMe').checked;
-    const err = document.getElementById('err-msg');
-    const btn = document.querySelector('.auth-btn');
+        const u = document.getElementById('userid').value.trim();
+        const p = document.getElementById('userpass').value.trim();
+        const rem = document.getElementById('remMe').checked;
+        const err = document.getElementById('err-msg');
+        const btn = document.getElementById('loginBtn');
 
-    if(!u || !p) return;
+        if(!u || !p) return;
+        
+        btn.innerText = "AUTHENTICATING...";
+        err.style.display = 'none';
 
-    btn.innerText = "AUTHENTICATING...";
-    err.style.display = 'none';
+        try {
+            const loginUrl = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
+            const res = await fetch(loginUrl);
+            const data = await res.json();
 
-    try {
-        // encodeURIComponent is critical for the '@' in 'Pun@Para'
-        const loginUrl = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
-        const res = await fetch(loginUrl);
-        const data = await res.json();
+            if(data.success) {
+                if(rem) localStorage.setItem('epi_remember_uid', u);
+                else localStorage.removeItem('epi_remember_uid');
 
-        if(data.success) {
-            if(rem) localStorage.setItem('epi_remember_uid', u);
-            else localStorage.removeItem('epi_remember_uid');
-
-            userReg = data.region;
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('main-dashboard').style.display = 'block';
-            
-            document.getElementById('view-title').innerText = `EPIROC - ${userReg.toUpperCase()}`;
-            document.getElementById('session-tag').innerText = `Manager: ${data.name} | Access: ${userReg}`;
-            initDropdown();
-        } else {
-            err.style.display = 'block'; // Shows "Invalid Credentials"
+                userReg = data.region;
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('main-dashboard').style.display = 'block';
+                document.getElementById('view-title').innerText = `EPIROC - ${userReg.toUpperCase()} MONITOR`;
+                document.getElementById('session-tag').innerText = `Manager: ${data.name} | Region: ${userReg}`;
+                initDropdown();
+            } else {
+                err.style.display = 'block';
+                btn.innerText = "AUTHENTICATE & ENTER";
+            }
+        } catch (e) { 
+            alert("API Error: Ensure script is deployed as 'Anyone'."); 
             btn.innerText = "AUTHENTICATE & ENTER";
         }
-    } catch (e) {
-        alert("Connectivity Error. Ensure Web App URL is correct and deployed as 'Anyone'.");
-        btn.innerText = "AUTHENTICATE & ENTER";
     }
-}
 
     async function initDropdown() {
         const res = await fetch(`${API}?get=list&userRegion=${userReg}`);
@@ -127,11 +128,10 @@
 
     async function refreshData() {
         const rig = document.getElementById('rigSel').value;
-        const m = document.getElementById('monthSel').value;
         if(!rig) return;
         document.getElementById('load-tag').style.display = 'inline';
         try {
-            const res = await fetch(`${API}?fleetId=${encodeURIComponent(rig)}&month=${m}&userRegion=${userReg}`);
+            const res = await fetch(`${API}?fleetId=${encodeURIComponent(rig)}&userRegion=${userReg}`);
             const d = await res.json();
             const row = d.latest, limits = d.limits;
 
@@ -142,23 +142,16 @@
             document.getElementById('v-hyd').innerText = row[34] || "0";
             document.getElementById('v-volt').innerText = row[40] || "0";
 
-            const oil = parseFloat(row[11]), oilEl = document.getElementById('v-oil');
-            oilEl.innerText = oil || "0";
-            if (oil < limits.oilLimit) {
-                oilEl.className = "val blink-red";
-                document.getElementById('u-oil').innerText = `⚠️ LOW (<${limits.oilLimit})`;
-            } else { oilEl.className = "val"; document.getElementById('u-oil').innerText = "bar (L)"; }
+            const o = parseFloat(row[11]);
+            document.getElementById('v-oil').innerText = o || "0";
+            document.getElementById('v-oil').className = (o < limits.oilLimit) ? "val blink-red" : "val";
 
-            const temp = parseFloat(row[8]), tempEl = document.getElementById('v-temp');
-            tempEl.innerText = temp || "0";
-            if (temp > limits.tempLimit) {
-                tempEl.className = "val blink-red";
-                document.getElementById('u-temp').innerText = `⚠️ HIGH (>${limits.tempLimit})`;
-            } else { tempEl.className = "val"; document.getElementById('u-temp').innerText = "°C (I)"; }
+            const t = parseFloat(row[8]);
+            document.getElementById('v-temp').innerText = t || "0";
+            document.getElementById('v-temp').className = (t > limits.tempLimit) ? "val blink-red" : "val";
         } catch (e) { console.error("Data Sync Error."); }
         document.getElementById('load-tag').style.display = 'none';
     }
 </script>
 </body>
 </html>
-
