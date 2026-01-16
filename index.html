@@ -80,41 +80,43 @@
     };
 
     async function executeLogin() {
-        const u = document.getElementById('userid').value.trim();
-        const p = document.getElementById('userpass').value.trim();
-        const rem = document.getElementById('remMe').checked;
-        const err = document.getElementById('err-msg');
-        const btn = document.getElementById('loginBtn');
+    const u = document.getElementById('userid').value.trim();
+    const p = document.getElementById('userpass').value.trim();
+    const rem = document.getElementById('remMe').checked;
+    const err = document.getElementById('err-msg');
+    const btn = document.querySelector('.auth-btn');
 
-        if(!u || !p) return;
-        
-        btn.innerText = "AUTHENTICATING...";
-        err.style.display = 'none';
+    if(!u || !p) return;
 
-        try {
-            const loginUrl = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
-            const res = await fetch(loginUrl);
-            const data = await res.json();
+    btn.innerText = "AUTHENTICATING...";
+    err.style.display = 'none';
 
-            if(data.success) {
-                if(rem) localStorage.setItem('epi_remember_uid', u);
-                else localStorage.removeItem('epi_remember_uid');
+    try {
+        // encodeURIComponent is critical for the '@' in 'Pun@Para'
+        const loginUrl = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
+        const res = await fetch(loginUrl);
+        const data = await res.json();
 
-                userReg = data.region;
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('main-dashboard').style.display = 'block';
-                document.getElementById('view-title').innerText = `EPIROC - ${userReg.toUpperCase()} MONITOR`;
-                document.getElementById('session-tag').innerText = `Manager: ${data.name} | Region: ${userReg}`;
-                initDropdown();
-            } else {
-                err.style.display = 'block';
-                btn.innerText = "AUTHENTICATE & ENTER";
-            }
-        } catch (e) { 
-            alert("API Error: Ensure script is deployed as 'Anyone'."); 
+        if(data.success) {
+            if(rem) localStorage.setItem('epi_remember_uid', u);
+            else localStorage.removeItem('epi_remember_uid');
+
+            userReg = data.region;
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-dashboard').style.display = 'block';
+            
+            document.getElementById('view-title').innerText = `EPIROC - ${userReg.toUpperCase()}`;
+            document.getElementById('session-tag').innerText = `Manager: ${data.name} | Access: ${userReg}`;
+            initDropdown();
+        } else {
+            err.style.display = 'block'; // Shows "Invalid Credentials"
             btn.innerText = "AUTHENTICATE & ENTER";
         }
+    } catch (e) {
+        alert("Connectivity Error. Ensure Web App URL is correct and deployed as 'Anyone'.");
+        btn.innerText = "AUTHENTICATE & ENTER";
     }
+}
 
     async function initDropdown() {
         const res = await fetch(`${API}?get=list&userRegion=${userReg}`);
@@ -159,3 +161,4 @@
 </script>
 </body>
 </html>
+
