@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EPIROC REGIONAL TECHNICAL VIEW</title>
+    <title>EPIROC REGIONAL TECHNICAL MONITOR</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
+        /* CSS ROOT VARIABLES */
         :root { 
             --ey: #f1c40f; 
             --bg: #0d0d0d; 
@@ -15,6 +17,8 @@
             --blue: #3498db; 
             --dim: #95a5a6;
         }
+
+        /* RESET & BASE STYLES */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: var(--bg); 
@@ -22,7 +26,7 @@
             margin: 0; 
             padding: 20px; 
             opacity: 0; 
-            transition: 0.5s; 
+            transition: opacity 0.6s ease-in-out; 
         }
         .authorized { opacity: 1 !important; }
         
@@ -32,184 +36,212 @@
             justify-content: space-between; 
             align-items: center; 
             border-bottom: 2px solid var(--ey); 
-            padding-bottom: 15px; 
-            margin-bottom: 25px; 
+            padding-bottom: 20px; 
+            margin-bottom: 30px; 
         }
-        .logo-box h1 { margin: 0; font-size: 1.6rem; letter-spacing: 1px; color: var(--ey); }
-        .user-tag { color: var(--dim); font-size: 0.85rem; margin-top: 5px; }
+        .logo-box h1 { 
+            margin: 0; 
+            font-size: 1.8rem; 
+            letter-spacing: 1.5px; 
+            color: var(--ey); 
+            text-transform: uppercase;
+        }
+        .user-tag { 
+            color: var(--dim); 
+            font-size: 0.9rem; 
+            margin-top: 5px; 
+            font-style: italic;
+        }
 
-        /* INPUTS SECTION */
+        /* DASHBOARD CONTROLS */
         .controls { 
             background: var(--card); 
-            padding: 15px 20px; 
-            border-radius: 8px; 
-            margin-bottom: 25px; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-bottom: 30px; 
             display: flex; 
-            gap: 20px; 
+            gap: 25px; 
             align-items: center; 
             border: 1px solid #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
         select, input { 
             padding: 12px; 
             background: #000; 
             color: #fff; 
             border: 1px solid #444; 
-            border-radius: 5px; 
+            border-radius: 6px; 
             cursor: pointer;
-            min-width: 200px;
+            min-width: 220px;
+            font-size: 1rem;
         }
 
-        /* CARD GRID SYSTEM */
+        /* DIAGNOSTIC GRID SYSTEM */
         .grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 20px; 
+            gap: 25px; 
         }
         .card { 
             background: var(--card); 
-            padding: 20px; 
-            border-radius: 12px; 
-            border-left: 4px solid var(--ey); 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
+            padding: 25px; 
+            border-radius: 15px; 
+            border-left: 5px solid var(--ey); 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
         }
-        .card:hover { transform: translateY(-3px); }
+        .card:hover { transform: translateY(-5px); border-left-color: #fff; }
         
         .title { 
             color: var(--ey); 
-            font-size: 0.8rem; 
+            font-size: 0.85rem; 
             font-weight: bold; 
             text-transform: uppercase; 
-            margin-bottom: 15px; 
-            letter-spacing: 0.5px;
+            margin-bottom: 18px; 
+            letter-spacing: 1px;
             border-bottom: 1px solid #333;
-            padding-bottom: 8px;
+            padding-bottom: 10px;
         }
-        .val { font-size: 2.2rem; font-weight: bold; display: block; margin: 5px 0; }
-        .unit { font-size: 0.8rem; color: var(--dim); text-transform: uppercase; }
+        .val { font-size: 2.5rem; font-weight: 900; display: block; margin: 8px 0; }
+        .unit { font-size: 0.85rem; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* DYNAMIC ALERT ANIMATION */
-        .alert-text { color: var(--red) !important; animation: blink 1s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        /* BLINKING ALERT LOGIC */
+        .alert-text { color: var(--red) !important; animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.2; } }
 
-        #sync-loader { color: var(--ey); font-weight: bold; margin-left: 10px; display: none; }
+        #sync-indicator { 
+            color: var(--ey); 
+            font-weight: bold; 
+            margin-left: 15px; 
+            display: none; 
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="branding">
+    <header class="branding">
         <div class="logo-box">
             <h1 id="header-title">EPIROC PARAMETER MONITOR</h1>
-            <div id="user-info" class="user-tag">Verifying Regional Access Profile...</div>
+            <div id="user-info" class="user-tag">Synchronizing regional user profile...</div>
         </div>
-        <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" height="55" alt="Epiroc Logo">
-    </div>
+        <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" height="65" alt="Epiroc Logo">
+    </header>
 
-    <div class="controls">
-        <div>
-            <label class="unit">Select Asset ID</label><br>
+    <section class="controls">
+        <div class="control-group">
+            <label class="unit">Active Asset ID</label>
             <select id="fleetSelect" onchange="fetchData()"><option value="">-- Select Rig --</option></select>
         </div>
-        <div>
-            <label class="unit">Analysis Month</label><br>
+        <div class="control-group">
+            <label class="unit">Select Audit Month</label>
             <input type="month" id="monthFilter" onchange="fetchData()">
         </div>
-        <span id="sync-loader">⏳ SYNCING DATABASE...</span>
-    </div>
+        <div id="sync-indicator">⏳ REFRESHING DIAGNOSTICS...</div>
+    </section>
 
-    <div class="grid">
+    <main class="grid">
         <div class="card">
             <div class="title">Engine Rotation</div>
             <span id="e-rpm" class="val">--</span>
-            <span class="unit">RPM (Col H)</span>
+            <span class="unit">Revolutions / Min (H)</span>
         </div>
 
         <div class="card">
             <div class="title">Engine Oil Pressure</div>
             <span id="e-oil" class="val">--</span>
-            <span id="oil-unit" class="unit">BAR (Col L)</span>
+            <span id="oil-unit" class="unit">BAR Pressure (L)</span>
         </div>
 
         <div class="card">
             <div class="title">Coolant Temperature</div>
             <span id="e-temp" class="val">--</span>
-            <span id="temp-unit" class="unit">°C (Col I)</span>
+            <span id="temp-unit" class="unit">Celsius Scale (I)</span>
         </div>
 
         <div class="card">
-            <div class="title">Fuel Pressure</div>
+            <div class="title">Primary Fuel Pressure</div>
             <span id="o-fuel" class="val">--</span>
-            <span class="unit">BAR (Col N)</span>
+            <span class="unit">BAR Pressure (N)</span>
         </div>
 
         <div class="card">
-            <div class="title">Receiver No-Load</div>
+            <div class="title">Receiver (No-Load)</div>
             <span id="c-press-nl" class="val">--</span>
-            <span class="unit">BAR (Col O)</span>
+            <span class="unit">BAR Pressure (O)</span>
         </div>
 
         <div class="card">
             <div class="title">Hydraulic Oil Temp</div>
             <span id="h-temp" class="val">--</span>
-            <span id="h-unit" class="unit">°C (Col AI)</span>
+            <span id="h-unit" class="unit">Celsius Scale (AI)</span>
         </div>
 
         <div class="card">
-            <div class="title">Charging System</div>
+            <div class="title">System Charging</div>
             <span id="o-volt" class="val">--</span>
-            <span id="v-unit" class="unit">VOLTS (Col AO)</span>
+            <span id="v-unit" class="unit">Direct Current Volts (AO)</span>
         </div>
 
         <div class="card">
-            <div class="title">Current Engine Load</div>
+            <div class="title">Real-Time Engine Load</div>
             <span id="e-load" class="val">--</span>
-            <span class="unit">PERCENTAGE (Col J)</span>
+            <span class="unit">Percentage % (J)</span>
         </div>
-    </div>
+    </main>
 </div>
 
+
+
 <script>
-    const API = "https://script.google.com/macros/s/AKfycbxR-CBiIjVdYnDqnAhzC21IMwDTnTe9WiM1wjksM01yqE1jWtbpEiEQcXvicH44RoU1/exec";
+    // USER CONFIGURATION
+    const API = "https://script.google.com/macros/s/AKfycbx16GMewSg_YgQpGlXJtxrmfOFxBC-x1okiB9wqvzlyPnqvdQt7v9TPQwtLw6qJlGNo/exec";
     let userRegion = "All";
 
+    // INITIALIZATION & LOGIN
     window.onload = async () => {
-        const u = prompt("Enter Regional User ID:");
-        const p = prompt("Enter Password:");
+        const u = prompt("Authorized User ID:");
+        const p = prompt("Security Password:");
         
         if(!u || !p) { location.reload(); return; }
 
-        const res = await fetch(`${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
-        const data = await res.json();
-        
-        if(data.success) { 
-            userRegion = data.region;
-            document.getElementById('header-title').innerText = `EPIROC - ${userRegion.toUpperCase()} VIEW`;
-            document.getElementById('user-info').innerText = `Logged in: ${data.name} | Active Region: ${userRegion}`;
-            document.body.classList.add('authorized');
-            init(); 
-        } else { 
-            alert("Unauthorized. Please check your credentials."); 
-            location.reload(); 
-        }
+        try {
+            const res = await fetch(`${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
+            const data = await res.json();
+            
+            if(data.success) { 
+                userRegion = data.region;
+                document.getElementById('header-title').innerText = `EPIROC - ${userRegion.toUpperCase()} VIEW`;
+                document.getElementById('user-info').innerText = `Logged in: ${data.name} | Regional Scope: ${userRegion}`;
+                document.body.classList.add('authorized');
+                initRigList(); 
+            } else { 
+                alert("Access Denied: Invalid Credentials."); 
+                location.reload(); 
+            }
+        } catch (err) { alert("Server Connection Error. Check API URL."); }
     };
 
-    async function init() {
+    // FETCH RIG LIST BASED ON REGION
+    async function initRigList() {
         try {
             const res = await fetch(`${API}?get=list&userRegion=${userRegion}`);
             const rigs = await res.json();
             const sel = document.getElementById('fleetSelect');
             sel.innerHTML = rigs.map(id => `<option value="${id}">${id}</option>`).join('');
             if(rigs.length > 0) fetchData();
-        } catch (e) { console.error("Critical: Rig list failed to sync."); }
+        } catch (e) { console.error("Rig list sync failed."); }
     }
 
+    // MAIN DATA FETCHING ENGINE
     async function fetchData() {
         const id = document.getElementById('fleetSelect').value;
         const month = document.getElementById('monthFilter').value;
         if (!id) return;
         
-        document.getElementById('sync-loader').style.display = 'inline';
+        document.getElementById('sync-indicator').style.display = 'inline';
         
         try {
             const res = await fetch(`${API}?fleetId=${encodeURIComponent(id)}&month=${month}&userRegion=${userRegion}`);
@@ -217,25 +249,25 @@
             const latest = d.latest;
             const limits = d.limits;
 
-            // Mapping Standard Values
+            // 1. DATA MAPPING (Static Columns)
             document.getElementById('e-rpm').innerText = latest[7] || "0";
-            document.getElementById('e-load').innerText = latest[9] || "0";
-            document.getElementById('o-fuel').innerText = latest[13] || "0";
-            document.getElementById('c-press-nl').innerText = latest[14] || "0";
+            document.getElementById('e-load').innerText = (latest[9] || "0") + "%";
+            document.getElementById('o-fuel').innerText = latest[13] || "0.0";
+            document.getElementById('c-press-nl').innerText = latest[14] || "0.0";
             
-            // 1. Oil Pressure Logic (Threshold vs Col L)
+            // 2. OIL PRESSURE ALERT LOGIC (Column L vs Threshold Sheet)
             const oilVal = parseFloat(latest[11]);
             const oilEl = document.getElementById('e-oil');
-            oilEl.innerText = oilVal || "0";
+            oilEl.innerText = oilVal || "0.0";
             if (oilVal < limits.oilLimit) {
                 oilEl.className = "val alert-text";
                 document.getElementById('oil-unit').innerText = `⚠️ LOW (Threshold: ${limits.oilLimit})`;
             } else {
                 oilEl.className = "val";
-                document.getElementById('oil-unit').innerText = "BAR (Col L)";
+                document.getElementById('oil-unit').innerText = "BAR Pressure (L)";
             }
 
-            // 2. Coolant Temp Logic (Threshold vs Col I)
+            // 3. COOLANT TEMPERATURE ALERT LOGIC (Column I vs Threshold Sheet)
             const tempVal = parseFloat(latest[8]);
             const tempEl = document.getElementById('e-temp');
             tempEl.innerText = tempVal || "0";
@@ -244,35 +276,38 @@
                 document.getElementById('temp-unit').innerText = `⚠️ HIGH (Threshold: ${limits.tempLimit})`;
             } else {
                 tempEl.className = "val";
-                document.getElementById('temp-unit').innerText = "°C (Col I)";
+                document.getElementById('temp-unit').innerText = "Celsius Scale (I)";
             }
 
-            // 3. Hydraulic Temperature Logic (Col AI)
+            // 4. HYDRAULIC TEMPERATURE ALERT (Column AI)
             const hydVal = parseFloat(latest[34]);
             const hydEl = document.getElementById('h-temp');
             hydEl.innerText = hydVal || "0";
             if (hydVal > 85) {
                 hydEl.className = "val alert-text";
-                document.getElementById('h-unit').innerText = "⚠️ OVERHEAT (>85°C)";
+                document.getElementById('h-unit').innerText = "⚠️ OVERHEAT CRITICAL";
             } else {
                 hydEl.className = "val";
-                document.getElementById('h-unit').innerText = "°C (Col AI)";
+                document.getElementById('h-unit').innerText = "Celsius Scale (AI)";
             }
 
-            // 4. Charging Voltage Logic (Col AO)
+            // 5. CHARGING VOLTAGE ALERT (Column AO)
             const voltVal = parseFloat(latest[40]);
             const voltEl = document.getElementById('o-volt');
-            voltEl.innerText = voltVal || "0";
+            voltEl.innerText = voltVal || "0.0";
             if (voltVal < 24 || voltVal > 29) {
                 voltEl.className = "val alert-text";
-                document.getElementById('v-unit').innerText = "⚠️ VOLTAGE ERR (24-29V)";
+                document.getElementById('v-unit').innerText = "⚠️ VOLTAGE OUT OF RANGE";
             } else {
                 voltEl.className = "val";
-                document.getElementById('v-unit').innerText = "VOLTS (Col AO)";
+                document.getElementById('v-unit').innerText = "Direct Current Volts (AO)";
             }
 
-        } catch (e) { console.error("Network Error: Could not refresh diagnostics."); }
-        document.getElementById('sync-loader').style.display = 'none';
+        } catch (e) { 
+            console.error("Data Sync Error."); 
+            alert("Database sync failed. Please try again.");
+        }
+        document.getElementById('sync-indicator').style.display = 'none';
     }
 </script>
 </body>
