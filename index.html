@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EPIROC REGIONAL TECHNICAL MONITOR</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>EPIROC REGIONAL MONITOR</title>
     
     <style>
         :root { 
@@ -13,7 +12,6 @@
             --card: #1a1a1a; 
             --red: #ff4d4d; 
             --green: #2ecc71; 
-            --blue: #3498db; 
             --dim: #95a5a6;
         }
 
@@ -26,53 +24,59 @@
             overflow-x: hidden;
         }
 
-        /* --- LOGIN OVERLAY STYLES --- */
+        /* --- LOGIN OVERLAY --- */
         #login-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.98);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: 0.5s;
         }
         .login-box {
             background: var(--card);
             padding: 40px;
             border-radius: 15px;
             border: 2px solid var(--ey);
-            width: 350px;
+            width: 380px;
             text-align: center;
-            box-shadow: 0 0 30px rgba(241, 196, 15, 0.2);
+            box-shadow: 0 0 40px rgba(241, 196, 15, 0.1);
         }
-        .login-box img { height: 50px; margin-bottom: 20px; }
-        .login-box h2 { margin-bottom: 25px; color: var(--ey); letter-spacing: 1px; }
-        .login-box input {
+        .login-box h2 { color: var(--ey); margin-bottom: 25px; letter-spacing: 2px; }
+        .login-box input[type="text"], .login-box input[type="password"] {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             margin-bottom: 15px;
             background: #000;
             border: 1px solid #444;
             color: #fff;
-            border-radius: 5px;
+            border-radius: 6px;
             box-sizing: border-box;
+        }
+        .remember-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: var(--dim);
         }
         .login-box button {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: var(--ey);
             color: #000;
             border: none;
             font-weight: bold;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: 0.3s;
+            font-size: 1rem;
         }
         .login-box button:hover { background: #fff; }
-        .login-box #login-err { color: var(--red); font-size: 0.8rem; margin-top: 10px; display: none; }
 
-        /* --- MAIN DASHBOARD STYLES (HIDDEN UNTIL LOGIN) --- */
+        /* --- DASHBOARD LAYOUT --- */
         #main-content { display: none; }
         
         .branding { 
@@ -83,7 +87,6 @@
             padding-bottom: 20px; 
             margin-bottom: 30px; 
         }
-        .logo-box h1 { margin: 0; font-size: 1.8rem; color: var(--ey); }
 
         .controls { 
             background: var(--card); 
@@ -95,7 +98,7 @@
             border: 1px solid #333;
         }
         .control-group { display: flex; flex-direction: column; gap: 5px; }
-        select, input { 
+        select, input[type="month"] { 
             padding: 12px; background: #000; color: #fff; 
             border: 1px solid #444; border-radius: 6px; min-width: 220px;
         }
@@ -115,7 +118,6 @@
         .val { font-size: 2.2rem; font-weight: bold; display: block; }
         .unit { font-size: 0.8rem; color: var(--dim); text-transform: uppercase; }
 
-        /* BLINKING ALERT */
         .alert-text { color: var(--red) !important; animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.3; } }
     </style>
@@ -124,56 +126,71 @@
 
 <div id="login-overlay">
     <div class="login-box">
-        <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" alt="Logo">
-        <h2>REGIONAL LOGIN</h2>
-        <input type="text" id="userInput" placeholder="Management User ID">
+        <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" height="50" style="margin-bottom:20px;">
+        <h2>REGIONAL ACCESS</h2>
+        <input type="text" id="userInput" placeholder="Management ID">
         <input type="password" id="passInput" placeholder="Password">
-        <button onclick="attemptLogin()">ACCESS DASHBOARD</button>
-        <div id="login-err">Invalid Credentials. Access Denied.</div>
+        
+        <div class="remember-container">
+            <input type="checkbox" id="rememberMe">
+            <label for="rememberMe">Remember User ID</label>
+        </div>
+
+        <button onclick="attemptLogin()">ENTER DASHBOARD</button>
+        <div id="login-err" style="color:var(--red); font-size:0.8rem; margin-top:15px; display:none;">Invalid Credentials</div>
     </div>
 </div>
 
 <div id="main-content">
     <header class="branding">
-        <div class="logo-box">
-            <h1 id="header-title">EPIROC PARAMETER MONITOR</h1>
-            <div id="user-info" style="color:var(--dim); font-size: 0.9rem;">Initializing...</div>
+        <div>
+            <h1 id="header-title" style="margin:0; color:var(--ey);">EPIROC PARAMETER MONITOR</h1>
+            <div id="user-info" style="color:var(--dim); font-size: 0.9rem;">Connecting...</div>
         </div>
         <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" height="55">
     </header>
 
     <section class="controls">
         <div class="control-group">
-            <label class="unit">Asset Selection</label>
+            <label class="unit">Select Asset</label>
             <select id="fleetSelect" onchange="fetchData()"><option value="">-- Select Rig --</option></select>
         </div>
         <div class="control-group">
-            <label class="unit">Select Month</label>
+            <label class="unit">Data Month</label>
             <input type="month" id="monthFilter" onchange="fetchData()">
         </div>
         <div id="sync-loader" style="color:var(--ey); display:none; margin-left: 20px;">⏳ Syncing...</div>
     </section>
 
     <main class="grid">
-        <div class="card"><div class="title">Engine Rotation</div><span id="e-rpm" class="val">--</span><span class="unit">RPM (H)</span></div>
-        <div class="card"><div class="title">Oil Pressure</div><span id="e-oil" class="val">--</span><span id="oil-unit" class="unit">BAR (L)</span></div>
-        <div class="card"><div class="title">Coolant Temp</div><span id="e-temp" class="val">--</span><span id="temp-unit" class="unit">°C (I)</span></div>
+        <div class="card"><div class="title">Rotation</div><span id="e-rpm" class="val">--</span><span class="unit">RPM</span></div>
+        <div class="card"><div class="title">Oil Pressure</div><span id="e-oil" class="val">--</span><span id="oil-unit" class="unit">BAR</span></div>
+        <div class="card"><div class="title">Coolant Temp</div><span id="e-temp" class="val">--</span><span id="temp-unit" class="unit">°C</span></div>
         <div class="card"><div class="title">Fuel Pressure</div><span id="o-fuel" class="val">--</span><span class="unit">BAR (N)</span></div>
         <div class="card"><div class="title">Receiver NL</div><span id="c-press-nl" class="val">--</span><span class="unit">BAR (O)</span></div>
         <div class="card"><div class="title">Hydraulic Temp</div><span id="h-temp" class="val">--</span><span id="h-unit" class="unit">°C (AI)</span></div>
-        <div class="card"><div class="title">System Voltage</div><span id="o-volt" class="val">--</span><span id="v-unit" class="unit">VOLTS (AO)</span></div>
+        <div class="card"><div class="title">System Voltage</div><span id="o-volt" class="val">--</span><span id="v-unit" class="unit">V (AO)</span></div>
         <div class="card"><div class="title">Engine Load</div><span id="e-load" class="val">--</span><span class="unit">% (J)</span></div>
     </main>
 </div>
 
 <script>
-    const API = "REPLACE_WITH_YOUR_NEW_DEPLOYED_URL";
+    const API = "https://script.google.com/macros/s/AKfycbx16GMewSg_YgQpGlXJtxrmfOFxBC-x1okiB9wqvzlyPnqvdQt7v9TPQwtLw6qJlGNo/exec";
     let userRegion = "All";
 
-    // NEW LOGIN FUNCTION
+    // CHECK FOR REMEMBERED USER
+    window.onload = () => {
+        const savedUser = localStorage.getItem('epiroc_user');
+        if (savedUser) {
+            document.getElementById('userInput').value = savedUser;
+            document.getElementById('rememberMe').checked = true;
+        }
+    };
+
     async function attemptLogin() {
         const u = document.getElementById('userInput').value;
         const p = document.getElementById('passInput').value;
+        const remember = document.getElementById('rememberMe').checked;
         const err = document.getElementById('login-err');
         
         if(!u || !p) return;
@@ -183,16 +200,20 @@
             const data = await res.json();
             
             if(data.success) {
+                // REMEMBER ME LOGIC
+                if (remember) { localStorage.setItem('epiroc_user', u); } 
+                else { localStorage.removeItem('epiroc_user'); }
+
                 userRegion = data.region;
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
-                document.getElementById('header-title').innerText = `EPIROC - ${userRegion.toUpperCase()} VIEW`;
-                document.getElementById('user-info').innerText = `Logged in: ${data.name} | Region: ${userRegion}`;
+                document.getElementById('header-title').innerText = `EPIROC - ${userRegion.toUpperCase()}`;
+                document.getElementById('user-info').innerText = `User: ${data.name} | Region Scope: ${userRegion}`;
                 initRigList();
             } else {
                 err.style.display = 'block';
             }
-        } catch (e) { alert("Server Error. Check API connection."); }
+        } catch (e) { alert("API Connection Failed."); }
     }
 
     async function initRigList() {
@@ -217,47 +238,41 @@
             const latest = d.latest;
             const limits = d.limits;
 
-            // Values
             document.getElementById('e-rpm').innerText = latest[7] || "0";
             document.getElementById('e-load').innerText = (latest[9] || "0") + "%";
             document.getElementById('o-fuel').innerText = latest[13] || "0";
             document.getElementById('c-press-nl').innerText = latest[14] || "0";
             
-            // Oil Logic
+            // OIL THRESHOLD
             const oilVal = parseFloat(latest[11]);
             const oilEl = document.getElementById('e-oil');
             oilEl.innerText = oilVal || "0";
             if (oilVal < limits.oilLimit) {
                 oilEl.className = "val alert-text";
-                document.getElementById('oil-unit').innerText = `⚠️ LOW (Threshold: ${limits.oilLimit})`;
+                document.getElementById('oil-unit').innerText = `⚠️ LOW (${limits.oilLimit})`;
             } else {
                 oilEl.className = "val";
                 document.getElementById('oil-unit').innerText = "BAR (L)";
             }
 
-            // Temp Logic
+            // TEMP THRESHOLD
             const tempVal = parseFloat(latest[8]);
             const tempEl = document.getElementById('e-temp');
             tempEl.innerText = tempVal || "0";
             if (tempVal > limits.tempLimit) {
                 tempEl.className = "val alert-text";
-                document.getElementById('temp-unit').innerText = `⚠️ HIGH (Threshold: ${limits.tempLimit})`;
+                document.getElementById('temp-unit').innerText = `⚠️ HIGH (${limits.tempLimit})`;
             } else {
                 tempEl.className = "val";
                 document.getElementById('temp-unit').innerText = "°C (I)";
             }
 
-            // Voltage Logic
-            const voltVal = parseFloat(latest[40]);
-            const voltEl = document.getElementById('o-volt');
-            voltEl.innerText = voltVal || "0";
-            voltEl.className = (voltVal < 24 || voltVal > 29) ? "val alert-text" : "val";
-
-            // Hyd Logic
-            const hydVal = parseFloat(latest[34]);
-            const hydEl = document.getElementById('h-temp');
-            hydEl.innerText = hydVal || "0";
-            hydEl.className = (hydVal > 85) ? "val alert-text" : "val";
+            // VOLTAGE & HYD ALERTS
+            const v = parseFloat(latest[40]), h = parseFloat(latest[34]);
+            document.getElementById('o-volt').innerText = v;
+            document.getElementById('o-volt').className = (v < 24 || v > 29) ? "val alert-text" : "val";
+            document.getElementById('h-temp').innerText = h;
+            document.getElementById('h-temp').className = (h > 85) ? "val alert-text" : "val";
 
         } catch (e) { console.error("Data fetch failed."); }
         document.getElementById('sync-loader').style.display = 'none';
