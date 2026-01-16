@@ -2,59 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EPIROC REGIONAL FLEET MONITOR</title>
-    
+    <title>EPIROC REGIONAL TECHNICAL MONITOR</title>
     <style>
-        /* --- CORE BRANDING --- */
-        :root { 
-            --ey: #f1c40f; --bg: #0d0d0d; --card: #1a1a1a; 
-            --red: #ff4d4d; --green: #2ecc71; --dim: #95a5a6;
-        }
+        :root { --ey: #f1c40f; --bg: #0d0d0d; --card: #1a1a1a; --red: #ff4d4d; --dim: #95a5a6; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: #fff; margin: 0; padding: 25px; }
 
-        body { 
-            font-family: 'Segoe UI', sans-serif; background-color: var(--bg); 
-            color: #ffffff; margin: 0; padding: 25px; overflow-x: hidden;
-        }
-
-        /* --- PROFESSIONAL LOGIN OVERLAY --- */
+        /* --- LOGIN OVERLAY --- */
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 10000;
         }
-
         .login-grid {
-            background: var(--card); padding: 50px; border-radius: 12px;
-            border: 2px solid var(--ey); width: 420px; text-align: center;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+            background: var(--card); padding: 45px; border-radius: 12px;
+            border: 2px solid var(--ey); width: 380px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
+        .login-grid img { height: 50px; margin-bottom: 25px; }
+        .input-box { width: 100%; padding: 14px; margin-bottom: 15px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; box-sizing: border-box; }
+        .rem-check { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--dim); font-size: 0.9rem; }
+        .auth-btn { width: 100%; padding: 15px; background: var(--ey); border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
 
-        .login-grid img { height: 60px; margin-bottom: 25px; }
-        .login-grid h2 { color: var(--ey); text-transform: uppercase; margin-bottom: 30px; letter-spacing: 2px; }
-
-        .input-field { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        /* --- DASHBOARD --- */
+        #main-dashboard { display: none; }
+        .header { display: flex; justify-content: space-between; border-bottom: 3px solid var(--ey); padding-bottom: 15px; margin-bottom: 30px; }
+        .controls { background: var(--card); padding: 20px; border-radius: 10px; display: flex; gap: 20px; align-items: center; margin-bottom: 30px; }
         
-        .rem-row { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; color: var(--dim); font-size: 0.9rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: var(--card); padding: 25px; border-radius: 12px; border-left: 5px solid var(--ey); }
+        .title { color: var(--ey); font-size: 0.8rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+        .val { font-size: 2.5rem; font-weight: 800; display: block; }
+        .unit { font-size: 0.85rem; color: var(--dim); }
 
-        .auth-btn { width: 100%; padding: 16px; background: var(--ey); color: #000; border: none; font-weight: 900; border-radius: 8px; cursor: pointer; font-size: 1.1rem; transition: 0.3s; }
-        .auth-btn:hover { background: #fff; transform: translateY(-2px); }
-
-        #err-msg { color: var(--red); margin-top: 20px; display: none; font-weight: bold; }
-
-        /* --- DASHBOARD UI --- */
-        #dashboard-container { display: none; }
-        .header-box { display: flex; justify-content: space-between; border-bottom: 3px solid var(--ey); padding-bottom: 20px; margin-bottom: 35px; }
-        .nav-bar { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 35px; display: flex; gap: 25px; align-items: center; border: 1px solid #333; }
-        .nav-bar select, .nav-bar input { padding: 12px; background: #000; color: #fff; border: 1px solid #444; border-radius: 8px; min-width: 220px; }
-
-        /* --- PARAMETER GRID --- */
-        .param-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .param-card { background: var(--card); padding: 25px; border-radius: 15px; border-left: 5px solid var(--ey); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
-        .param-title { color: var(--ey); font-size: 0.8rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
-        .param-val { font-size: 2.5rem; font-weight: 800; display: block; }
-        .param-unit { font-size: 0.85rem; color: var(--dim); text-transform: uppercase; }
-
-        /* --- ALERT LOGIC --- */
         .blink-red { color: var(--red) !important; animation: blinker 1s infinite; }
         @keyframes blinker { 50% { opacity: 0.3; } }
     </style>
@@ -64,146 +42,102 @@
 <div id="login-overlay">
     <div class="login-grid">
         <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png">
-        <h2>Regional Access</h2>
-        <input type="text" id="userid" class="input-field" placeholder="Management User ID">
-        <input type="password" id="userpass" class="input-field" placeholder="Password">
-        
-        <div class="rem-row">
-            <input type="checkbox" id="remMe">
-            <label for="remMe">Remember User ID</label>
+        <h2 style="color:var(--ey);">REGIONAL LOGIN</h2>
+        <input type="text" id="userid" class="input-box" placeholder="User ID">
+        <input type="password" id="userpass" class="input-box" placeholder="Password">
+        <div class="rem-check">
+            <input type="checkbox" id="remMeCheckbox"> <label for="remMeCheckbox">Remember User ID</label>
         </div>
-
-        <button class="auth-btn" onclick="executeLogin()">AUTHENTICATE & ENTER</button>
-        <div id="err-msg">INVALID CREDENTIALS - ACCESS DENIED</div>
+        <button class="auth-btn" onclick="executeLogin()">LOGIN TO DASHBOARD</button>
+        <div id="login-err" style="color:var(--red); margin-top:15px; display:none;">Invalid Credentials</div>
     </div>
 </div>
 
-<div id="dashboard-container">
-    <header class="header-box">
-        <div>
-            <h1 id="view-title" style="margin:0; color:var(--ey); font-size: 2.2rem;">EPIROC FLEET MONITOR</h1>
-            <div id="session-tag" style="color:var(--dim); font-size:0.95rem; margin-top:5px;">Connecting...</div>
-        </div>
-        <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" height="55">
+<div id="main-dashboard">
+    <header class="header">
+        <div><h1 id="view-title" style="margin:0; color:var(--ey);">EPIROC FLEET MONITOR</h1><small id="session-info">Connecting...</small></div>
+        <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" height="50">
     </header>
 
-    <div class="nav-bar">
-        <select id="rigSel" onchange="refreshData()"><option value="">-- Select Rig --</option></select>
-        <input type="month" id="monthSel" onchange="refreshData()">
+    <div class="controls">
+        <select id="rigSelect" onchange="refreshData()" style="padding:12px; background:#000; color:#fff; border:1px solid #444; border-radius:8px; min-width:220px;"></select>
+        <input type="month" id="monthSelect" onchange="refreshData()" style="padding:12px; background:#000; color:#fff; border:1px solid #444; border-radius:8px;">
         <span id="load-tag" style="color:var(--ey); display:none; font-weight:bold;">⏳ SYNCING...</span>
     </div>
 
-    <div class="param-grid">
-        <div class="param-card"><div class="param-title">Engine RPM</div><span id="v-rpm" class="param-val">--</span><span class="param-unit">rpm (Col H)</span></div>
-        <div class="param-card"><div class="param-title">Oil Pressure</div><span id="v-oil" class="param-val">--</span><span id="u-oil" class="param-unit">bar (Col L)</span></div>
-        <div class="param-card"><div class="param-title">Coolant Temp</div><span id="v-temp" class="param-val">--</span><span id="u-temp" class="param-unit">°C (Col I)</span></div>
-        <div class="param-card"><div class="param-title">Fuel Press (N)</div><span id="v-fuel" class="param-val">--</span><span class="param-unit">bar (Col N)</span></div>
-        <div class="param-card"><div class="param-title">Receiver NL (O)</div><span id="v-rec" class="param-val">--</span><span class="param-unit">bar (Col O)</span></div>
-        <div class="param-card"><div class="param-title">Hyd Temp (AI)</div><span id="v-hyd" class="param-val">--</span><span id="u-hyd" class="param-unit">°C (Col AI)</span></div>
-        <div class="param-card"><div class="param-title">Charging (AO)</div><span id="v-volt" class="param-val">--</span><span id="u-volt" class="param-unit">volts (Col AO)</span></div>
-        <div class="param-card"><div class="param-title">Engine Load (J)</div><span id="v-load" class="param-val">--</span><span class="param-unit">% percent (Col J)</span></div>
+    <div class="grid">
+        <div class="card"><div class="title">Engine RPM</div><span id="v-rpm" class="val">--</span><span class="unit">RPM</span></div>
+        <div class="card"><div class="title">Oil Pressure</div><span id="v-oil" class="val">--</span><span id="u-oil" class="unit">BAR (L)</span></div>
+        <div class="card"><div class="title">Coolant Temp</div><span id="v-temp" class="val">--</span><span id="u-temp" class="unit">°C (I)</span></div>
+        <div class="card"><div class="title">Fuel Pressure</div><span id="v-fuel" class="val">--</span><span class="unit">BAR (N)</span></div>
+        <div class="card"><div class="title">Hydraulic Temp</div><span id="v-hyd" class="val">--</span><span class="unit">°C (AI)</span></div>
+        <div class="card"><div class="title">System Voltage</div><span id="v-volt" class="val">--</span><span class="unit">VOLTS (AO)</span></div>
     </div>
 </div>
 
-<script>
-    const API = "https://script.google.com/macros/s/AKfycbw0NKFG9l7yfPGruGU2l8JUM6GEuxJmRZqlH4JIq1tOLfMfyA_AAxOGAnoA_OLbimEz/exec";
-    let userReg = "All";
 
-    // REMEMBER ME CHECK
+
+<script>
+    const API = "https://script.google.com/macros/s/AKfycbzfeHm3OqWbEyhOLCitmo72y3SpRplA5QQL0wmkpyFgL7Dlx10PB1EI3bmfKDqMvKUX/exec";
+    let userRegion = "All";
+
     window.onload = () => {
-        const saved = localStorage.getItem('epi_remember_uid');
-        if (saved) {
-            document.getElementById('userid').value = saved;
-            document.getElementById('remMe').checked = true;
-        }
+        const saved = localStorage.getItem('epi_remembered_uid');
+        if (saved) { document.getElementById('userid').value = saved; document.getElementById('remMeCheckbox').checked = true; }
     };
 
-    // LOGIN PROCESS
     async function executeLogin() {
-        const u = document.getElementById('userid').value;
-        const p = document.getElementById('userpass').value;
-        const rem = document.getElementById('remMe').checked;
-        const err = document.getElementById('err-msg');
-
+        const u = document.getElementById('userid').value, p = document.getElementById('userpass').value;
+        const rem = document.getElementById('remMeCheckbox').checked;
         if(!u || !p) return;
 
-        try {
-            const res = await fetch(`${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
-            const data = await res.json();
-
-            if(data.success) {
-                if(rem) localStorage.setItem('epi_remember_uid', u);
-                else localStorage.removeItem('epi_remember_uid');
-
-                userReg = data.region;
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('dashboard-container').style.display = 'block';
-                document.getElementById('view-title').innerText = `EPIROC - ${userReg.toUpperCase()} MONITOR`;
-                document.getElementById('session-tag').innerText = `User: ${data.name} | Scope: ${userReg}`;
-                initDropdown();
-            } else {
-                err.style.display = 'block';
-            }
-        } catch (e) { alert("Connectivity Error. Verify Google Script Deployment."); }
+        const res = await fetch(`${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
+        const data = await res.json();
+        
+        if(data.success) {
+            if (rem) localStorage.setItem('epi_remembered_uid', u); else localStorage.removeItem('epi_remembered_uid');
+            userRegion = data.region;
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-dashboard').style.display = 'block';
+            document.getElementById('view-title').innerText = `EPIROC - ${userRegion.toUpperCase()} MONITOR`;
+            document.getElementById('session-info').innerText = `Logged in: ${data.name} | Region: ${userRegion}`;
+            initRigs();
+        } else { document.getElementById('login-err').style.display = 'block'; }
     }
 
-    async function initDropdown() {
-        const res = await fetch(`${API}?get=list&userRegion=${userReg}`);
-        const list = await res.json();
-        document.getElementById('rigSel').innerHTML = list.map(r => `<option value="${r}">${r}</option>`).join('');
-        if(list.length > 0) refreshData();
+    async function initRigs() {
+        const res = await fetch(`${API}?get=list&userRegion=${userRegion}`);
+        const rigs = await res.json();
+        document.getElementById('rigSelect').innerHTML = rigs.map(r => `<option value="${r}">${r}</option>`).join('');
+        if(rigs.length > 0) refreshData();
     }
 
     async function refreshData() {
-        const rig = document.getElementById('rigSel').value;
-        const m = document.getElementById('monthSel').value;
+        const rig = document.getElementById('rigSelect').value, m = document.getElementById('monthSelect').value;
         if(!rig) return;
-
         document.getElementById('load-tag').style.display = 'inline';
-        
-        try {
-            const res = await fetch(`${API}?fleetId=${encodeURIComponent(rig)}&month=${m}&userRegion=${userReg}`);
-            const d = await res.json();
-            const row = d.latest, limits = d.limits;
+        const res = await fetch(`${API}?fleetId=${encodeURIComponent(rig)}&month=${m}&userRegion=${userRegion}`);
+        const d = await res.json(), row = d.latest, limits = d.limits;
 
-            // Update Values
-            document.getElementById('v-rpm').innerText = row[7];
-            document.getElementById('v-load').innerText = row[9];
-            document.getElementById('v-fuel').innerText = row[13];
-            document.getElementById('v-rec').innerText = row[14];
+        document.getElementById('v-rpm').innerText = row[7];
+        document.getElementById('v-fuel').innerText = row[13];
+        document.getElementById('v-hyd').innerText = row[34];
+        document.getElementById('v-volt').innerText = row[40];
 
-            // Oil Threshold Check
-            const oilVal = parseFloat(row[11]);
-            const oilEl = document.getElementById('v-oil');
-            oilEl.innerText = oilVal;
-            if (oilVal < limits.oilLimit) {
-                oilEl.className = "param-val blink-red";
-                document.getElementById('u-oil').innerText = `⚠️ LOW (Limit: ${limits.oilLimit})`;
-            } else {
-                oilEl.className = "param-val";
-                document.getElementById('u-oil').innerText = "bar (Col L)";
-            }
+        // Oil Check
+        const o = parseFloat(row[11]);
+        const oEl = document.getElementById('v-oil');
+        oEl.innerText = o;
+        oEl.className = (o < limits.oilLimit) ? "val blink-red" : "val";
+        document.getElementById('u-oil').innerText = (o < limits.oilLimit) ? `⚠️ LOW (<${limits.oilLimit})` : "BAR (L)";
 
-            // Temp Alert
-            const tempVal = parseFloat(row[8]);
-            const tempEl = document.getElementById('v-temp');
-            tempEl.innerText = tempVal;
-            if (tempVal > limits.tempLimit) {
-                tempEl.className = "param-val blink-red";
-                document.getElementById('u-temp').innerText = `⚠️ HIGH (Limit: ${limits.tempLimit})`;
-            } else {
-                tempEl.className = "param-val";
-                document.getElementById('u-temp').innerText = "°C (Col I)";
-            }
+        // Temp Check
+        const t = parseFloat(row[8]);
+        const tEl = document.getElementById('v-temp');
+        tEl.innerText = t;
+        tEl.className = (t > limits.tempLimit) ? "val blink-red" : "val";
+        document.getElementById('u-temp').innerText = (t > limits.tempLimit) ? `⚠️ HIGH (>${limits.tempLimit})` : "°C (I)";
 
-            // Voltage & Hyd Alerts
-            const v = parseFloat(row[40]), h = parseFloat(row[34]);
-            document.getElementById('v-volt').innerText = v;
-            document.getElementById('v-volt').className = (v < 24 || v > 29) ? "param-val blink-red" : "param-val";
-            document.getElementById('v-hyd').innerText = h;
-            document.getElementById('v-hyd').className = (h > 85) ? "param-val blink-red" : "param-val";
-
-        } catch (e) { console.error("Sync Error"); }
         document.getElementById('load-tag').style.display = 'none';
     }
 </script>
