@@ -86,8 +86,12 @@
 
 <script>
     // 1. MUST UPDATE THIS URL WITH YOUR GOOGLE SCRIPT LINK
-    const API = "https://script.google.com/macros/s/AKfycbz8wKQ-I6Q5NcdAZfGhrdf6j2gclIi8FT2UcnWkggtTLQKselJcbBONxQ5yeyofwBRg/exec";
+    const API = "https://script.google.com/macros/s/AKfycbzGz_qz_VUpKH9v221GcOZDQizbTuH4bcWRYdxUYX1x_0AbIFJd7ozqAB2mF67q5wcB/exec";
     let userReg = "All";
+
+    <script>
+    // 1. UPDATE THIS URL WITH YOUR NEW DEPLOYMENT LINK
+    const API = "PASTE_YOUR_NEW_WEB_APP_URL_HERE";
 
     async function executeLogin() {
         const u = document.getElementById('userid').value.trim();
@@ -102,60 +106,36 @@
         btn.disabled = true;
 
         try {
-            const loginUrl = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
-            const res = await fetch(url);
+            // FIX: Variable name is 'targetUrl' to avoid confusion
+            const targetUrl = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
+            
+            const res = await fetch(targetUrl); // FIX: Using 'targetUrl' correctly
             const data = await res.json();
 
             if(data.success) {
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('main-dashboard').style.display = 'block';
                 document.getElementById('view-title').innerText = `EPIROC - ${data.region.toUpperCase()} MONITOR`;
-                initDropdown();
             } else {
-                // SHOW DEBUG INFO ON FAILURE
                 debugBox.style.display = 'block';
                 debugText.innerHTML = `
-                    <span style="color:white">Status:</span> ${data.debug || "Invalid Credentials"}<br>
-                    <span style="color:white">Rows Checked:</span> ${data.rowsChecked || 0}<br>
-                    <span style="color:white">Spreadsheet Data Seen:</span><br>
-                    <i style="color:#aaa">${data.sheetLookedLike || "No data returned"}</i>
+                    Status: ${data.debug || "Failed"}<br>
+                    Rows Checked: ${data.rowsChecked || 0}<br>
+                    Sheet Info: ${data.sheetInfo || "No access"}
                 `;
                 btn.innerText = "RETRY LOGIN";
                 btn.disabled = false;
             }
         } catch (e) {
             debugBox.style.display = 'block';
-            debugText.innerText = "Fatal Error: " + e.message;
+            debugText.innerText = "Connection Error: " + e.message;
             btn.innerText = "AUTHENTICATE & ENTER";
             btn.disabled = false;
         }
     }
-
-    async function initDropdown() {
-        const res = await fetch(`${API}?get=list&userRegion=${userReg}`);
-        const list = await res.json();
-        const sel = document.getElementById('rigSel');
-        sel.innerHTML = list.map(r => `<option value="${r}">${r}</option>`).join('');
-        if(list.length > 0) refreshData();
-    }
-
-    async function refreshData() {
-        const rig = document.getElementById('rigSel').value;
-        if(!rig) return;
-        document.getElementById('load-tag').style.display = 'inline';
-        try {
-            const res = await fetch(`${API}?fleetId=${encodeURIComponent(rig)}&userRegion=${userReg}`);
-            const d = await res.json();
-            const row = d.latest;
-            document.getElementById('v-rpm').innerText = row[7] || "0";
-            document.getElementById('v-oil').innerText = row[11] || "0";
-            document.getElementById('v-temp').innerText = row[8] || "0";
-            document.getElementById('v-fuel').innerText = row[13] || "0";
-        } catch (e) { console.error("Sync Error"); }
-        document.getElementById('load-tag').style.display = 'none';
-    }
 </script>
 </body>
 </html>
+
 
 
