@@ -65,7 +65,7 @@
 
 <script>
     // 1. UPDATE THIS URL WITH YOUR GOOGLE SCRIPT LINK
-    const API = "https://script.google.com/macros/s/AKfycbxs39cOFfVFW1hLUXfwKwOpakh7uvsxxqN-Biolk1BgjsLKBBr9liEqAxp4xrDv8Pj2/exec";
+    const API = "https://script.google.com/macros/s/AKfycbxyBmnxEd7jIsqmzvAZHy8bannilo86RNYzFXcpo0Uuuz38S25gTvM8tvba2dEEY_cm/exec";
     let userReg = "All";
 
     async function executeLogin() {
@@ -79,20 +79,21 @@
     btn.innerText = "AUTHENTICATING...";
 
     try {
-        // We define 'targetUrl' here...
         const targetUrl = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
-        
-        // ...and we use 'targetUrl' here. (Previously you had 'url' which caused the error)
         const res = await fetch(targetUrl);
         const data = await res.json();
 
+        // data.status matches the GS code now
         if(data.success) {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('main-dashboard').style.display = 'block';
             document.getElementById('view-title').innerText = `EPIROC - ${data.region.toUpperCase()}`;
         } else {
             dbgBox.style.display = 'block';
-            dbgText.innerHTML = `Status: ${data.debug}<br>Rows: ${data.rowsChecked || 0}`;
+            dbgText.innerHTML = `
+                Status: ${data.status}<br>
+                Rows Checked: ${data.rowsChecked || 0}
+            `;
             btn.innerText = "RETRY LOGIN";
         }
     } catch (e) {
@@ -131,6 +132,7 @@
 </script>
 </body>
 </html>
+
 
 
 
