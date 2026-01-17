@@ -86,7 +86,7 @@
 
 <script>
     // 1. MUST UPDATE THIS URL WITH YOUR GOOGLE SCRIPT LINK
-    const API = "https://script.google.com/macros/s/AKfycbw7zX1D5fTSz1yzLsiXDulcVr2sxjRQGS6U3uylfAWt90VFXMzxCWsawdV4UtExiWzG/exec";
+    const API = "https://script.google.com/macros/s/AKfycbz8wKQ-I6Q5NcdAZfGhrdf6j2gclIi8FT2UcnWkggtTLQKselJcbBONxQ5yeyofwBRg/exec";
     let userReg = "All";
 
     async function executeLogin() {
@@ -102,7 +102,7 @@
         btn.disabled = true;
 
         try {
-            const url = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
+            const loginUrl = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
             const res = await fetch(url);
             const data = await res.json();
 
@@ -157,4 +157,5 @@
 </script>
 </body>
 </html>
+
 
