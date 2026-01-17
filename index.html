@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EPIROC REGIONAL MONITOR - DEBUG MODE</title>
+    <title>EPIROC REGIONAL MONITOR - V10</title>
     <style>
         :root { --ey: #f1c40f; --bg: #0d0d0d; --card: #1a1a1a; --red: #ff4d4d; --dim: #95a5a6; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: #fff; margin: 0; padding: 25px; overflow-x: hidden; }
         
-        /* LOGIN SYSTEM */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .login-grid { background: var(--card); padding: 50px; border-radius: 12px; border: 2px solid var(--ey); width: 450px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.9); }
         .login-grid img { height: 60px; margin-bottom: 30px; }
@@ -16,21 +15,8 @@
         .auth-btn { width: 100%; padding: 16px; background: var(--ey); color: #000; border: none; font-weight: 900; border-radius: 8px; cursor: pointer; font-size: 1.1rem; transition: 0.3s; }
         .auth-btn:hover { background: #fff; }
 
-        /* DIAGNOSTIC BOX */
-        #debug-console { 
-            display: none; 
-            margin-top: 20px; 
-            text-align: left; 
-            background: #000; 
-            border: 1px solid var(--red); 
-            padding: 15px; 
-            font-family: 'Courier New', monospace; 
-            font-size: 11px; 
-            color: #00ff00; /* Neon green for clarity */
-            border-radius: 5px;
-        }
+        #debug-console { display: none; margin-top: 20px; text-align: left; background: #000; border: 1px solid var(--red); padding: 15px; font-family: 'Courier New', monospace; font-size: 11px; color: #00ff00; border-radius: 5px; }
 
-        /* DASHBOARD UI */
         #main-dashboard { display: none; }
         .header { display: flex; justify-content: space-between; border-bottom: 3px solid var(--ey); padding-bottom: 20px; margin-bottom: 35px; }
         .controls { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 35px; display: flex; gap: 25px; align-items: center; border: 1px solid #333; }
@@ -46,13 +32,10 @@
 <div id="login-overlay">
     <div class="login-grid">
         <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" alt="Epiroc Logo">
-        <h2 style="color:var(--ey); letter-spacing:1px; margin-bottom: 25px;">REGIONAL LOGIN V5</h2>
-        
+        <h2 style="color:var(--ey); letter-spacing:1px; margin-bottom: 25px;">REGIONAL LOGIN V10</h2>
         <input type="text" id="userid" class="input-field" placeholder="User ID">
         <input type="password" id="userpass" class="input-field" placeholder="Password">
-        
         <button class="auth-btn" id="loginBtn" onclick="executeLogin()">AUTHENTICATE & ENTER</button>
-
         <div id="debug-console">
             <strong style="color:var(--red);">[DIAGNOSTIC LOG]</strong><br>
             <span id="debug-text">Waiting for input...</span>
@@ -68,12 +51,10 @@
         </div>
         <img src="https://raw.githubusercontent.com/Dayalvish/Epiroc-dash/main/Picture1.png" height="55">
     </header>
-
     <div class="controls">
         <select id="rigSel" onchange="refreshData()"><option value="">-- Select Rig --</option></select>
         <span id="load-tag" style="color:var(--ey); display:none; font-weight:bold;">⏳ SYNCING...</span>
     </div>
-
     <div class="grid">
         <div class="card"><div>Engine Rotation</div><span id="v-rpm" class="val">--</span><small>RPM</small></div>
         <div class="card"><div>Oil Pressure</div><span id="v-oil" class="val">--</span><small>BAR</small></div>
@@ -82,16 +63,10 @@
     </div>
 </div>
 
-
-
 <script>
-    // 1. MUST UPDATE THIS URL WITH YOUR GOOGLE SCRIPT LINK
-    const API = "https://script.google.com/macros/s/AKfycbzGz_qz_VUpKH9v221GcOZDQizbTuH4bcWRYdxUYX1x_0AbIFJd7ozqAB2mF67q5wcB/exec";
+    // 1. UPDATE THIS URL WITH YOUR GOOGLE SCRIPT LINK
+    const API = "https://script.google.com/macros/s/AKfycbwnjW0fCLggfd1Zotv55BLjfEfx6JqbzfwgCz6v1qiN2M5nDrwFhLpXEGMbE6k4FYFK/exec";
     let userReg = "All";
-
-    <script>
-    // 1. UPDATE THIS URL WITH YOUR NEW DEPLOYMENT LINK
-    const API = "PASTE_YOUR_NEW_WEB_APP_URL_HERE";
 
     async function executeLogin() {
         const u = document.getElementById('userid').value.trim();
@@ -106,16 +81,16 @@
         btn.disabled = true;
 
         try {
-            // FIX: Variable name is 'targetUrl' to avoid confusion
             const targetUrl = `${API}?get=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`;
-            
-            const res = await fetch(targetUrl); // FIX: Using 'targetUrl' correctly
+            const res = await fetch(targetUrl);
             const data = await res.json();
 
             if(data.success) {
+                userReg = data.region || "All";
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('main-dashboard').style.display = 'block';
-                document.getElementById('view-title').innerText = `EPIROC - ${data.region.toUpperCase()} MONITOR`;
+                document.getElementById('view-title').innerText = `EPIROC - ${userReg.toUpperCase()} MONITOR`;
+                initDropdown();
             } else {
                 debugBox.style.display = 'block';
                 debugText.innerHTML = `
@@ -133,9 +108,30 @@
             btn.disabled = false;
         }
     }
+
+    async function initDropdown() {
+        const res = await fetch(`${API}?get=list&userRegion=${userReg}`);
+        const list = await res.json();
+        const sel = document.getElementById('rigSel');
+        sel.innerHTML = list.map(r => `<option value="${r}">${r}</option>`).join('');
+        if(list.length > 0) refreshData();
+    }
+
+    async function refreshData() {
+        const rig = document.getElementById('rigSel').value;
+        if(!rig) return;
+        document.getElementById('load-tag').style.display = 'inline';
+        try {
+            const res = await fetch(`${API}?fleetId=${encodeURIComponent(rig)}&userRegion=${userReg}`);
+            const d = await res.json();
+            const row = d.latest;
+            document.getElementById('v-rpm').innerText = row[7] || "0";
+            document.getElementById('v-oil').innerText = row[11] || "0";
+            document.getElementById('v-temp').innerText = row[8] || "0";
+            document.getElementById('v-fuel').innerText = row[13] || "0";
+        } catch (e) { console.error("Sync Error"); }
+        document.getElementById('load-tag').style.display = 'none';
+    }
 </script>
 </body>
 </html>
-
-
-
